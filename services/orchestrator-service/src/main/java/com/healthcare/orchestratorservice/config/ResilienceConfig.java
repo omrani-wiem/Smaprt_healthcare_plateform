@@ -26,11 +26,11 @@ public class ResilienceConfig {
         return CircuitBreakerConfig.custom()
                 .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
                 .slidingWindowSize(6)
-                .minimumNumberOfCalls(3)                       // pas de décision avant 3 appels
-                .failureRateThreshold(50)                      // ouvre à 50 % d'échecs
+                .minimumNumberOfCalls(3)
+                .failureRateThreshold(50)
                 .waitDurationInOpenState(Duration.ofSeconds(15))
                 .permittedNumberOfCallsInHalfOpenState(2)
-                .ignoreExceptions(HttpClientErrorException.class)  // un 404 n'est pas une panne
+                .ignoreExceptions(HttpClientErrorException.class)
                 .build();
     }
 
@@ -39,7 +39,7 @@ public class ResilienceConfig {
                 .maxAttempts(3)
                 .intervalFunction(IntervalFunction.ofExponentialBackoff(Duration.ofMillis(300), 2))
                 .retryOnException(e -> !(e instanceof HttpClientErrorException)
-                                    && !(e instanceof CallNotPermittedException))
+                        && !(e instanceof CallNotPermittedException))
                 .build();
     }
 

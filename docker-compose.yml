@@ -1,4 +1,9 @@
+x-common-env: &common-env
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+
 services:
+  # ---------- Infrastructure ----------
   postgres:
     image: postgres:16
     container_name: hc-postgres
@@ -10,7 +15,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init.sql
-  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -21,8 +30,12 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
-  
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: hc-keycloak
@@ -37,8 +50,97 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-     - postgres
+      postgres:
+        condition: service_healthy
 
+  # ---------- Applications (profil "apps") ----------
+  eureka:
+    profiles: ["apps"]
+    build: ./services/eureka-server
+    ports:
+      - "8761:8761"
+
+  rest-service:
+    profiles: ["apps"]
+    build: ./services/restservice
+    restart: on-failure
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rest_db
+    depends_on:
+      postgres: { condition: service_healthy }
+      eureka: { condition: service_started }
+
+  soap-service:
+    profiles: ["apps"]
+    build: ./services/soap-service
+    restart: on-failure
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/soap_db
+    depends_on:
+      postgres: { condition: service_healthy }
+      eureka: { condition: service_started }
+
+  graphql-service:
+    profiles: ["apps"]
+    build: ./services/graphql-service
+    restart: on-failure
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/graphql_db
+    depends_on:
+      postgres: { condition: service_healthy }
+      eureka: { condition: service_started }
+
+  orchestrator-service:
+    profiles: ["apps"]
+    build: ./services/orchestrator-service
+    restart: on-failure
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orchestrator_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka: { condition: service_started }
+
+  telemetry-service:
+    profiles: ["apps"]
+    build: ./services/telemetry-service
+    restart: on-failure
+    environment:
+      <<: *common-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/telemetry_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    ports:
+      - "9090:9090"      # gRPC : le capteur tourne sur ta machine
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      orchestrator-service: { condition: service_started }   # crée la file avant les publications
+      eureka: { condition: service_started }
+
+  api-gateway:
+    profiles: ["apps"]
+    build: ./services/api-gateway
+    restart: on-failure
+    environment:
+      <<: *common-env
+      # les clés publiques sont lues via le réseau Docker ; l'"issuer" reste celui du navigateur
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI: http://keycloak:8080/realms/healthcare/protocol/openid-connect/certs
+    ports:
+      - "8000:8000"
+    depends_on:
+      - eureka
+      - keycloak
+
+  client-web:
+    profiles: ["apps"]
+    build: ./client-web
+    ports:
+      - "5173:80"
 
 volumes:
   pgdata:

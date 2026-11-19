@@ -1,0 +1,109 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [eureka-server, restservice, soap-service, graphql-service, telemetry-service, orchestrator-service, api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+          cache-dependency-path: services/*/pom.xml
+      - name: Tests
+        working-directory: services/${{ matrix.service }}
+        run: chmod +x mvnw && ./mvnw -B verify
+
+  build-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client-web/package-lock.json
+      - working-directory: client-web
+        run: |
+          npm ci
+          npm run build
+
+  docker:
+    needs: [test-backend, build-client]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: eureka-server, context: services/eureka-server }
+          - { name: rest-service, context: services/restservice }
+          - { name: soap-service, context: services/soap-service }
+          - { name: graphql-service, context: services/graphql-service }
+          - { name: telemetry-service, context: services/telemetry-service }
+          - { name: orchestrator-service, context: services/orchestrator-service }
+          - { name: api-gateway, context: services/api-gateway }
+          - { name: client-web, context: client-web }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Connexion au registre GHCR
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/hc-${{ matrix.name }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Build (et push sur main)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  smoke-test:
+    needs: [test-backend, build-client]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Démarrer toute la plateforme
+        run: docker compose --profile apps up -d --build
+      - name: Attendre la Gateway
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/actuator/health > /dev/null; then echo "Gateway prête"; exit 0; fi
+            sleep 5
+          done
+          docker compose --profile apps logs --tail=80
+          exit 1
+      - name: La sécurité est active (401 sans token)
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/rest/api/doctors)
+          test "$code" = "401"
+      - name: Services enregistrés dans Eureka
+        run: curl -sf http://localhost:8761/eureka/apps | grep -c "<application>" 
+      - name: Logs en cas d'échec
+        if: failure()
+        run: docker compose --profile apps logs --tail=100
