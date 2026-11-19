@@ -1,3 +1,4 @@
+
 server:
   port: 8085
 
@@ -5,7 +6,7 @@ spring:
   application:
     name: orchestrator-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/orchestrator_db
+    url: jdbc:postgresql://postgres:5432/orchestrator_db
     username: admin
     password: admin
   jpa:
@@ -13,13 +14,13 @@ spring:
       ddl-auto: update
     show-sql: true
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: admin
     password: admin
     listener:
       simple:
-        default-requeue-rejected: false   # après échec définitif -> DLQ
+        default-requeue-rejected: false
         retry:
           enabled: true
           initial-interval: 2s
@@ -30,7 +31,7 @@ eureka:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka:8761/eureka
 
 management:
   endpoints:
