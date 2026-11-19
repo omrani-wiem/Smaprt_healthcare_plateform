@@ -1,4 +1,4 @@
-package main.java.com.healthcare.restservice.dto;
+package com.healthcare.restservice.dto;
 
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;

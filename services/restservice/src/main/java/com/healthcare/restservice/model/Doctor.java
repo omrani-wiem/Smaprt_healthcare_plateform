@@ -1,17 +1,12 @@
-package com.healthcare.rest_service.model;
-
-import java.lang.annotation.Inherited;
-
-import javax.annotation.processing.Generated;
+package com.healthcare.restservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "patients")
+@Table(name = "doctors")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-
-public class Patient {
+public class Doctor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +18,6 @@ public class Patient {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(unique = true)
-    private String email;
-
-    private String phone;
-    private String address;
+    @Column(nullable = false)
+    private String specialty;
 }

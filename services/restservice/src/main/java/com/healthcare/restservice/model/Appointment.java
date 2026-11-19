@@ -1,4 +1,4 @@
-package main.java.com.healthcare.restservice.model;
+package com.healthcare.restservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;

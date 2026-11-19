@@ -1,12 +1,13 @@
-package main.java.com.healthcare.restservice.model;
+package com.healthcare.restservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "doctors")
+@Table(name = "patients")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Doctor {
+
+public class Patient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,6 +19,9 @@ public class Doctor {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
-    private String specialty;
+    @Column(unique = true)
+    private String email;
+
+    private String phone;
+    private String address;
 }

@@ -1,4 +1,4 @@
-package com.healthcare.rest_service;
+package com.healthcare.restservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

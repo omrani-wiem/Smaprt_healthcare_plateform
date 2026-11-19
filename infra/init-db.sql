@@ -1,5 +1,5 @@
 CREATE DATABASE soap_db;
-CREATE DATABASE rest_db.
+CREATE DATABASE rest_db;
 CREATE DATABASE graphql_db;
 CREATE DATABASE telemetry_db;
 CREATE DATABASE keycloak_db;

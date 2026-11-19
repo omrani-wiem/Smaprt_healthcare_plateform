@@ -1,6 +1,7 @@
-package main.java.com.healthcare.restservice.repository;
+package com.healthcare.restservice.repository;
 
 import com.healthcare.restservice.model.Appointment;
+import com.healthcare.restservice.model.AppointmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.List;
