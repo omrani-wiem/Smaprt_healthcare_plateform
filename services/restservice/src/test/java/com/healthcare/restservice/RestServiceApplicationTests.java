@@ -1,4 +1,4 @@
-package com.healthcare.rest_service;
+package com.healthcare.restservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
