@@ -3,6 +3,7 @@ package com.healthcare.telemetryservice.grpc;
 import com.healthcare.telemetryservice.model.AlertRecord;
 import com.healthcare.telemetryservice.repository.AlertRecordRepository;
 import com.healthcare.telemetryservice.service.AlertBroadcaster;
+import com.healthcare.telemetryservice.service.AlertEventPublisher;
 import com.healthcare.telemetryservice.service.ThresholdDetector;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
@@ -22,6 +23,7 @@ public class TelemetryGrpcService extends TelemetryServiceGrpc.TelemetryServiceI
     private final ThresholdDetector detector;
     private final AlertBroadcaster broadcaster;
     private final AlertRecordRepository alertRepository;
+    private final AlertEventPublisher eventPublisher; 
 
     @Override
     public StreamObserver<VitalReading> streamVitals(StreamObserver<StreamSummary> responseObserver) {
@@ -44,6 +46,7 @@ public class TelemetryGrpcService extends TelemetryServiceGrpc.TelemetryServiceI
                             .createdAt(LocalDateTime.now())
                             .build());
                     broadcaster.publish(alert);
+                    eventPublisher.publish(alert);
                     log.warn("ALERTE {} pour le patient {}", alert.getType(), alert.getPatientId());
                 });
             }

@@ -3,3 +3,4 @@ CREATE DATABASE rest_db;
 CREATE DATABASE graphql_db;
 CREATE DATABASE telemetry_db;
 CREATE DATABASE keycloak_db;
+CREATE DATABASE orchestrator_db;

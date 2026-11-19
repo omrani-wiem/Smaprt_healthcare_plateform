@@ -42,6 +42,13 @@ spring:
                 - Path=/telemetry/**
               filters:
                 - StripPrefix=1
+
+            - id: orchestrator-service
+              uri: lb://orchestrator-service
+              predicates:
+                - Path=/orchestrator/**
+              filters:
+                - StripPrefix=1
     security:
         oauth2:
             resourceserver:

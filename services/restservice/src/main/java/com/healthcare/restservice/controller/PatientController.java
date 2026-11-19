@@ -43,6 +43,7 @@ public class PatientController {
         patient.setEmail(data.getEmail());
         patient.setPhone(data.getPhone());
         patient.setAddress(data.getAddress());
+        patient.setNumeroCNAM(data.getNumeroCNAM());
         return repository.save(patient);
     }
 }

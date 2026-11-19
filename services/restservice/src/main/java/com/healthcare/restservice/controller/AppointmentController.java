@@ -1,6 +1,7 @@
 package com.healthcare.restservice.controller;
 
 import com.healthcare.restservice.dto.AppointmentRequest;
+import com.healthcare.restservice.dto.EmergencyAppointmentRequest;
 import com.healthcare.restservice.model.Appointment;
 import com.healthcare.restservice.service.AppointmentService;
 import jakarta.validation.Valid;
@@ -43,5 +44,11 @@ public class AppointmentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable Long id) {
         service.cancel(id);
+    }
+
+        @PostMapping("/emergency")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Appointment emergency(@Valid @RequestBody EmergencyAppointmentRequest request) {
+        return service.createEmergency(request);
     }
 }

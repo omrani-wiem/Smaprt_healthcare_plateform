@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 
+import com.healthcare.restservice.dto.EmergencyAppointmentRequest;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+
+
 import java.util.List;
 
 
@@ -88,4 +94,27 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
     }
+
+
+        public Appointment createEmergency(EmergencyAppointmentRequest request) {
+        Patient patient = patientRepository.findById(request.patientId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Patient introuvable"));
+
+        Doctor doctor = (request.specialty() != null
+                ? doctorRepository.findFirstBySpecialty(request.specialty())
+                : Optional.<Doctor>empty())
+                .or(() -> doctorRepository.findAll().stream().findFirst())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE, "Aucun médecin disponible"));
+
+        return appointmentRepository.save(Appointment.builder()
+                .patient(patient)
+                .doctor(doctor)
+                .dateTime(LocalDateTime.now().plusMinutes(15).withNano(0))
+                .status(AppointmentStatus.EMERGENCY)
+                .reason(request.reason())
+                .build());
+    }
+    
 }
