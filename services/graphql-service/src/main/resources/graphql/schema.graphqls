@@ -1,0 +1,46 @@
+enum RiskLevel {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+}
+
+type Query {
+    patient(id: ID!): Patient
+    patients(service: String, pathologie: String, risque: RiskLevel): [Patient!]!
+}
+
+type Patient {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    age: Int!
+    service: String!
+    pathologie: String!
+    risque: RiskLevel!
+    vitals(last: Int = 5): [VitalSign!]!
+    alerts(limit: Int = 5): [Alert!]!
+    treatments: [Treatment!]!
+}
+
+type VitalSign {
+    heartRate: Int!
+    spo2: Int!
+    temperature: Float!
+    systolic: Int!
+    diastolic: Int!
+    recordedAt: String!
+}
+
+type Alert {
+    type: String!
+    severity: String!
+    message: String!
+    createdAt: String!
+}
+
+type Treatment {
+    medication: String!
+    dosage: String!
+    startDate: String!
+}
