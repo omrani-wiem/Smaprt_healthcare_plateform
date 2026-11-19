@@ -71,10 +71,12 @@ public class InterventionWorkflow {
                 saved.getId(), appointmentId, coverage.reason());
     }
 
-    public Map<String, Object> buildSheet(Intervention intervention) {
+        public Map<String, Object> buildSheet(Intervention intervention) {
+        Map<?, ?> patient = dashboard.patientSheet(intervention.getPatientId());
         Map<String, Object> sheet = new LinkedHashMap<>();
         sheet.put("intervention", intervention);
-        sheet.put("patient", dashboard.patientSheet(intervention.getPatientId()));
+        sheet.put("patient", patient);
+        sheet.put("degraded", patient == null);   // le dossier détaillé est indisponible
         return sheet;
     }
 

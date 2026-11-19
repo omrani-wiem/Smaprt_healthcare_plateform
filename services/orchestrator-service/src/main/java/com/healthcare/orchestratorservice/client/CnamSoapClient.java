@@ -1,5 +1,6 @@
 package com.healthcare.orchestratorservice.client;
 
+import com.healthcare.orchestratorservice.service.Resilient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,11 @@ public class CnamSoapClient {
     public record Coverage(boolean open, int rate, String reason) {}
 
     private final RestClient rest;
+    private final Resilient resilient;
 
-    public CnamSoapClient(@LoadBalanced RestClient.Builder builder) {
+    public CnamSoapClient(@LoadBalanced RestClient.Builder builder, Resilient resilient) {
         this.rest = builder.baseUrl("http://soap-service").build();
+        this.resilient = resilient;
     }
 
     public Coverage verify(Long patientId, String numeroCnam, String codeActe) {
@@ -37,10 +40,10 @@ public class CnamSoapClient {
                   </soapenv:Body>
                 </soapenv:Envelope>""".formatted(NS, patientId, escape(numeroCnam), escape(codeActe));
 
-        String xml = rest.post().uri("/ws")
+        String xml = resilient.call("soap-service", () -> rest.post().uri("/ws")
                 .contentType(MediaType.TEXT_XML)
                 .body(envelope)
-                .retrieve().body(String.class);
+                .retrieve().body(String.class));
         return parse(xml);
     }
 
