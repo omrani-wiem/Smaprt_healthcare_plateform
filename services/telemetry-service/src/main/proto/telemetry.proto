@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package healthcare.telemetry;
+
+option java_multiple_files = true;
+option java_package = "com.healthcare.telemetryservice.grpc";
+
+service TelemetryService {
+  // Le capteur envoie un flux de mesures, la centrale répond avec un résumé à la fin
+  rpc StreamVitals (stream VitalReading) returns (StreamSummary);
+
+  // L'abonné reçoit en direct toutes les alertes
+  rpc SubscribeAlerts (AlertSubscription) returns (stream AlertEvent);
+}
+
+message VitalReading {
+  int64 patient_id = 1;
+  int32 heart_rate = 2;
+  int32 spo2 = 3;
+  double temperature = 4;
+  bool fall_detected = 5;
+  int64 timestamp_ms = 6;
+}
+
+message StreamSummary {
+  int32 readings_received = 1;
+  int32 alerts_raised = 2;
+}
+
+message AlertSubscription {}
+
+message AlertEvent {
+  int64 patient_id = 1;
+  string type = 2;
+  string severity = 3;
+  string message = 4;
+  int32 heart_rate = 5;
+  int32 spo2 = 6;
+  int64 timestamp_ms = 7;
+}
