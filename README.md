@@ -278,10 +278,10 @@ Les règles d'alerte sont dans `infra/prometheus/alerts.yml` et visibles sur `ht
 Pour en déclencher une : `docker compose stop soap-service`.
 
 ### Prometheus : état des cibles
-![Prometheus targets](docs/images/prometheus-targets.png)
+![Prometheus targets](docs/img/prometheus-targets.png)
 
 ### Grafana : dashboard JVM
-![Grafana dashboard](docs/images/grafana-dashboard.png)
+![Grafana dashboard](docs/img/grafana-dashboard.png)
 
 ## Documentation des API
 
