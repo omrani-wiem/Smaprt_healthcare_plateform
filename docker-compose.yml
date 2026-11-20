@@ -39,7 +39,9 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: hc-keycloak
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+       - ./infra/keycloak/healthcare-realm.json:/opt/keycloak/data/import/healthcare-realm.json:ro
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
@@ -141,6 +143,32 @@ services:
     build: ./client-web
     ports:
       - "5173:80"
+
+    # ---------- Observabilité (profil "monitoring") ----------
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:v3.0.1
+    container_name: hc-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "9091:9090"      # 9090 est déjà pris par le gRPC de la télémétrie
+
+  grafana:
+    profiles: ["monitoring"]
+    image: grafana/grafana:11.4.0
+    container_name: hc-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   pgdata:

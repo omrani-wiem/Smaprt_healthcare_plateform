@@ -1,0 +1,453 @@
+openapi: 3.1.0
+info:
+  title: Portail Patient et Rendez-vous - API REST
+  description: "Rendez-vous, patients, médecins et prescriptions. Accès via l'API\
+    \ Gateway avec un JWT Keycloak."
+  version: "1.0"
+servers:
+- url: http://localhost:8000/rest
+  description: Via l'API Gateway
+security:
+- bearer: []
+tags:
+- name: Rendez-vous
+  description: "Prise, modification et annulation de rendez-vous"
+- name: Médecins
+  description: Gestion des médecins
+- name: Patients
+  description: Gestion des patients
+- name: Ordonnances
+  description: Gestion des ordonnances
+paths:
+  /api/patients/{id}:
+    get:
+      tags:
+      - Patients
+      summary: Consulter un patient par ID
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Patient"
+    put:
+      tags:
+      - Patients
+      summary: Mettre à jour le profil d'un patient
+      operationId: updateProfile
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Patient"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Patient"
+  /api/appointments/{id}:
+    get:
+      tags:
+      - Rendez-vous
+      operationId: get_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    put:
+      tags:
+      - Rendez-vous
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    delete:
+      tags:
+      - Rendez-vous
+      operationId: cancel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: No Content
+  /api/prescriptions:
+    get:
+      tags:
+      - Ordonnances
+      summary: Consulter l'historique des ordonnances d'un patient
+      operationId: history
+      parameters:
+      - name: patientId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prescription"
+    post:
+      tags:
+      - Ordonnances
+      summary: Émettre une ordonnance
+      operationId: issue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrescriptionRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Prescription"
+  /api/patients:
+    get:
+      tags:
+      - Patients
+      summary: Lister les patients
+      operationId: list
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Patient"
+    post:
+      tags:
+      - Patients
+      summary: Créer un patient
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Patient"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Patient"
+  /api/doctors:
+    get:
+      tags:
+      - Médecins
+      operationId: list_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Doctor"
+    post:
+      tags:
+      - Médecins
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Doctor"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Doctor"
+  /api/appointments:
+    get:
+      tags:
+      - Rendez-vous
+      operationId: list_2
+      parameters:
+      - name: patientId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      tags:
+      - Rendez-vous
+      summary: Réserver un rendez-vous
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentRequest"
+        required: true
+      responses:
+        "201":
+          description: Rendez-vous créé
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "409":
+          description: Créneau déjà réservé
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Appointment"
+  /api/appointments/emergency:
+    post:
+      tags:
+      - Rendez-vous
+      summary: Réserver un rendez-vous d'urgence
+      description: Appelé par l'orchestrateur
+      operationId: emergency
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmergencyAppointmentRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Appointment"
+  /api/doctors/path:
+    get:
+      tags:
+      - Médecins
+      summary: Consulter un médecin par ID
+      operationId: getMethodName
+      parameters:
+      - name: param
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  schemas:
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        numeroCNAM:
+          type: string
+    AppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        doctorId:
+          type: integer
+          format: int64
+        dateTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          maxLength: 255
+          minLength: 0
+      required:
+      - dateTime
+      - doctorId
+      - patientId
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        patient:
+          $ref: "#/components/schemas/Patient"
+        doctor:
+          $ref: "#/components/schemas/Doctor"
+        dateTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - SCHEDULED
+          - CANCELLED
+          - COMPLETED
+          - EMERGENCY
+        reason:
+          type: string
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        specialty:
+          type: string
+    PrescriptionRequest:
+      type: object
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        doctorId:
+          type: integer
+          format: int64
+        medication:
+          type: string
+          minLength: 1
+        dosage:
+          type: string
+          minLength: 1
+        durationDays:
+          type: integer
+          format: int32
+          maximum: 365
+          minimum: 1
+        instructions:
+          type: string
+          maxLength: 255
+          minLength: 0
+      required:
+      - doctorId
+      - dosage
+      - medication
+      - patientId
+    Prescription:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        patient:
+          $ref: "#/components/schemas/Patient"
+        doctor:
+          $ref: "#/components/schemas/Doctor"
+        medication:
+          type: string
+        dosage:
+          type: string
+        durationDays:
+          type: integer
+          format: int32
+        instructions:
+          type: string
+        issuedOn:
+          type: string
+          format: date
+    EmergencyAppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: integer
+          format: int64
+        specialty:
+          type: string
+        reason:
+          type: string
+      required:
+      - patientId
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

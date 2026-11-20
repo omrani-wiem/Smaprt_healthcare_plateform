@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,8 @@ public class TelemetryGrpcService extends TelemetryServiceGrpc.TelemetryServiceI
     private final ThresholdDetector detector;
     private final AlertBroadcaster broadcaster;
     private final AlertRecordRepository alertRepository;
-    private final AlertEventPublisher eventPublisher; 
+    private final AlertEventPublisher eventPublisher;
+    private final MeterRegistry meters; 
 
     @Override
     public StreamObserver<VitalReading> streamVitals(StreamObserver<StreamSummary> responseObserver) {
@@ -34,8 +36,11 @@ public class TelemetryGrpcService extends TelemetryServiceGrpc.TelemetryServiceI
             @Override
             public void onNext(VitalReading reading) {
                 readings++;
+                meters.counter("healthcare.readings").increment();
                 detector.detect(reading).ifPresent(alert -> {
                     alerts++;
+                     meters.counter("healthcare.alerts",                      
+                            "type", alert.getType(), "severity", alert.getSeverity()).increment();
                     alertRepository.save(AlertRecord.builder()
                             .patientId(alert.getPatientId())
                             .type(alert.getType())

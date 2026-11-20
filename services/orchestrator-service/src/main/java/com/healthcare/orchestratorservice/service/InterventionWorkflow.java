@@ -7,6 +7,8 @@ import com.healthcare.orchestratorservice.client.RestPortalClient;
 import com.healthcare.orchestratorservice.event.AlertRaisedEvent;
 import com.healthcare.orchestratorservice.model.Intervention;
 import com.healthcare.orchestratorservice.repository.InterventionRepository;
+
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,14 +34,17 @@ public class InterventionWorkflow {
     private final CnamSoapClient cnam;
     private final DashboardGraphQlClient dashboard;
     private final InterventionRepository repository;
+    private final MeterRegistry meters;
 
     public void handle(AlertRaisedEvent event) {
         // Garde anti-doublon : une crise = 1 intervention, pas 10
         Instant last = lastHandled.get(event.patientId());
         if (last != null && Instant.now().isBefore(last.plus(COOLDOWN))) {
+            meters.counter("healthcare.alerts.deduplicated").increment();
             log.info("Alerte ignorée (intervention déjà en cours) pour le patient {}", event.patientId());
             return;
         }
+        Instant started = Instant.now(); 
         log.info("Début de prise en charge : {} pour le patient {}", event.type(), event.patientId());
 
         // 1. Dossier patient (REST) : une erreur ici fait échouer le message -> nouvelle tentative, puis DLQ
@@ -67,6 +72,10 @@ public class InterventionWorkflow {
                 .createdAt(LocalDateTime.now())
                 .build());
         lastHandled.put(event.patientId(), Instant.now());
+        meters.counter("healthcare.interventions",
+                "coverage", coverage.open() ? "open" : "closed").increment();  // <- nouveau
+        meters.timer("healthcare.workflow.duration")
+                .record(Duration.between(started, Instant.now())); 
         log.info("Intervention {} créée (rendez-vous {}, couverture : {})",
                 saved.getId(), appointmentId, coverage.reason());
     }

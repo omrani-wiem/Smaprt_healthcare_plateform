@@ -28,8 +28,11 @@ public class SecurityConfig {
             .authorizeExchange(ex -> ex
                 // preflight CORS : traité par la Gateway, sans token
                 .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                .pathMatchers("/actuator/health").permitAll()
-
+                                .pathMatchers("/actuator/health", "/actuator/prometheus").permitAll()
+                                .pathMatchers(HttpMethod.POST, "/rest/api/prescriptions")
+                    .hasAnyRole("MEDECIN", "ADMINISTRATEUR")
+                .pathMatchers("/rest/api/prescriptions")
+                    .hasAnyRole("PATIENT", "MEDECIN", "ADMINISTRATEUR")
                 // patients : portail de rendez-vous
                 .pathMatchers("/rest/api/doctors/**", "/rest/api/appointments/**")
                     .hasAnyRole("PATIENT", "MEDECIN", "ADMINISTRATEUR")

@@ -90,18 +90,36 @@ jobs:
       - uses: actions/checkout@v4
       - name: Démarrer toute la plateforme
         run: docker compose --profile apps up -d --build
-      - name: Attendre la Gateway
+      - name: Attendre la Gateway (401 = démarrée et sécurisée)
         run: |
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:8000/actuator/health > /dev/null; then echo "Gateway prête"; exit 0; fi
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/rest/api/doctors || true)
+            if [ "$code" = "401" ]; then echo "Gateway prête, sécurité active"; exit 0; fi
             sleep 5
           done
           docker compose --profile apps logs --tail=80
           exit 1
-      - name: La sécurité est active (401 sans token)
+      - name: RBAC de bout en bout (Keycloak, Gateway, services)
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/rest/api/doctors)
-          test "$code" = "401"
+          until curl -sf http://localhost:8080/realms/healthcare > /dev/null; do sleep 5; done
+          token() {
+            curl -sf -X POST http://localhost:8080/realms/healthcare/protocol/openid-connect/token \
+              -d grant_type=password -d client_id=healthcare-web -d username="$1" -d password="$1" \
+              | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])"
+          }
+          T_MED=$(token medecin1); T_PAT=$(token patient1)
+          expect() {   # chemin, token, code attendu (on réessaie : les services s'enregistrent dans Eureka)
+            for i in $(seq 1 40); do
+              c=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $2" "http://localhost:8000$1")
+              if [ "$c" = "$3" ]; then echo "OK $1 -> $c"; return 0; fi
+              sleep 5
+            done
+            echo "ECHEC $1 : attendu $3, obtenu $c"; return 1
+          }
+          expect /rest/api/doctors              "$T_MED" 200
+          expect /rest/api/doctors              "$T_PAT" 200
+          expect /orchestrator/api/interventions "$T_MED" 200
+          expect /orchestrator/api/interventions "$T_PAT" 403
       - name: Services enregistrés dans Eureka
         run: curl -sf http://localhost:8761/eureka/apps | grep -c "<application>" 
       - name: Logs en cas d'échec

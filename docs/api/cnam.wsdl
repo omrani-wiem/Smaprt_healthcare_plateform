@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://healthcare.com/soap/cnam" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://healthcare.com/soap/cnam" targetNamespace="http://healthcare.com/soap/cnam">
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://healthcare.com/soap/cnam">
+
+    <xs:element name="verifierDroitsCNAMRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="patientId" type="xs:long"/>
+                <xs:element name="numeroCNAM" type="xs:string"/>
+                <xs:element name="codeActe" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="verifierDroitsCNAMResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="droitsOuverts" type="xs:boolean"/>
+                <xs:element name="tauxRemboursement" type="xs:int"/>
+                <xs:element name="motif" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+
+    <xs:element name="emettreFeuilleDeSoinsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="patientId" type="xs:long"/>
+                <xs:element name="numeroCNAM" type="xs:string"/>
+                <xs:element name="codeActe" type="xs:string"/>
+                <xs:element name="montant" type="xs:decimal"/>
+                <xs:element name="dateActe" type="xs:date"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+
+     <xs:element name="emettreFeuilleDeSoinsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="numeroFeuille" type="xs:string"/>
+                <xs:element name="montantRembourse" type="xs:decimal"/>
+                <xs:element name="resteACharge" type="xs:decimal"/>
+                <xs:element name="statut" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+
+     <xs:element name="consulterHistoriqueRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="patientId" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="consulterHistoriqueResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" name="acte" type="tns:acte"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="acte">
+        <xs:sequence>
+            <xs:element name="numeroFeuille" type="xs:string"/>
+            <xs:element name="codeActe" type="xs:string"/>
+            <xs:element name="dateActe" type="xs:date"/>
+            <xs:element name="montant" type="xs:decimal"/>
+            <xs:element name="montantRembourse" type="xs:decimal"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="verifierDroitsCNAMResponse">
+    <wsdl:part element="tns:verifierDroitsCNAMResponse" name="verifierDroitsCNAMResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="emettreFeuilleDeSoinsResponse">
+    <wsdl:part element="tns:emettreFeuilleDeSoinsResponse" name="emettreFeuilleDeSoinsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="consulterHistoriqueResponse">
+    <wsdl:part element="tns:consulterHistoriqueResponse" name="consulterHistoriqueResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="consulterHistoriqueRequest">
+    <wsdl:part element="tns:consulterHistoriqueRequest" name="consulterHistoriqueRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="emettreFeuilleDeSoinsRequest">
+    <wsdl:part element="tns:emettreFeuilleDeSoinsRequest" name="emettreFeuilleDeSoinsRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="verifierDroitsCNAMRequest">
+    <wsdl:part element="tns:verifierDroitsCNAMRequest" name="verifierDroitsCNAMRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="CnamPort">
+    <wsdl:operation name="verifierDroitsCNAM">
+      <wsdl:input message="tns:verifierDroitsCNAMRequest" name="verifierDroitsCNAMRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:verifierDroitsCNAMResponse" name="verifierDroitsCNAMResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="emettreFeuilleDeSoins">
+      <wsdl:input message="tns:emettreFeuilleDeSoinsRequest" name="emettreFeuilleDeSoinsRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:emettreFeuilleDeSoinsResponse" name="emettreFeuilleDeSoinsResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consulterHistorique">
+      <wsdl:input message="tns:consulterHistoriqueRequest" name="consulterHistoriqueRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:consulterHistoriqueResponse" name="consulterHistoriqueResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="CnamPortSoap11" type="tns:CnamPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="verifierDroitsCNAM">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="verifierDroitsCNAMRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="verifierDroitsCNAMResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="emettreFeuilleDeSoins">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="emettreFeuilleDeSoinsRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="emettreFeuilleDeSoinsResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consulterHistorique">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="consulterHistoriqueRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="consulterHistoriqueResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="CnamPortService">
+    <wsdl:port binding="tns:CnamPortSoap11" name="CnamPortSoap11">
+      <soap:address location="http://localhost:8000/soap"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
