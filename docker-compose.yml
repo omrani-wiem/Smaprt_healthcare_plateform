@@ -116,6 +116,8 @@ services:
       <<: *common-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/telemetry_db
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin
     ports:
       - "9090:9090"      # gRPC : le capteur tourne sur ta machine
     depends_on:

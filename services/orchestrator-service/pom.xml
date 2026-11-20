@@ -99,10 +99,16 @@
         </dependency>
 
 		<dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <scope>test</scope>
-</dependency>
+    		<groupId>com.h2database</groupId>
+    		<artifactId>h2</artifactId>
+    		<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
     </dependencies>
 
@@ -121,12 +127,6 @@
 				<version>${spring-boot-admin.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-
-			<dependency>
-    			<groupId>io.micrometer</groupId>
-    			<artifactId>micrometer-registry-prometheus</artifactId>
-    			<scope>runtime</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
